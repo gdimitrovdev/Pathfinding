@@ -1,5 +1,6 @@
 # system imports
 import sys
+from time import sleep
 
 # pip installed imports
 import pygame
@@ -127,30 +128,34 @@ def path(x, y):
     start_x = 0
     start_y = 0
     grid = []
-    for i in range(y):
+    for i in range(x):
         grid.append([])
-        for j in range(x):
+        for j in range(y):
             rect = pygame.Rect((start_x, start_y), (20, 20))
             grid[i].append(rect)
-            start_x += 20
-        start_y += 20
-        start_x = 0
+            start_y += 20
+        start_x += 20
+        start_y = 0
 
     # coordinates for key points on the grid
     beginning = []
     end = []
-    obstacles = []
+    obstacles = {}
 
     # help message displayed on screen
     help_message = "Select a starting point."
     help_text = font.render(help_message, True, (0, 0, 0))
 
-    # state ( 0 -> selecting starting point, 1 -> selecting end point, 2 -> drawing obstacles, 3 -> simulating)
+    # state ( 0 -> selecting starting point, 1 -> selecting end point,
+    #         2 -> drawing obstacles, 3 -> simulating, 4 -> finished )
     state = 0
 
     # start button after selecting end point
     start_button_rect = pygame.Rect((625, 200), (150, 50))
     start_button_text = font.render("Start simulation", True, (255, 255, 255))
+
+    # variable to check if the path has been found
+    found = False
 
     # update
     while True:
@@ -161,10 +166,10 @@ def path(x, y):
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # choosing points event
-                y1, x1 = event.pos
+                x1, y1 = event.pos
                 # getting coordinates of clicked button
                 x1, y1 = x1 // 20, y1 // 20
-                if y1 < x-1 and x1 < y-1:
+                if x1 < x and y1 < y:
                     # setting beginning point
                     if state == 0:
                         beginning = [x1, y1]
@@ -179,17 +184,17 @@ def path(x, y):
                         help_text = font.render(help_message, True, (0, 0, 0))
                     # setting obstacles
                     elif state == 2:
-                        obstacles.append([x1, y1])
+                        obstacles[(x1, y1)] = True
 
                 # start simulation event
-                if start_button_rect.collidepoint(event.pos) and state >= 2:
+                if start_button_rect.collidepoint(event.pos) and state == 2:
                     state = 3
                     # start looking for all possible paths
                     possible_paths = [[beginning]]
 
             # use enter instead of the start button
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
+                if event.key == pygame.K_RETURN and state == 2:
                     state = 3
                     # start looking for all possible paths
                     possible_paths = [[beginning]]
@@ -202,12 +207,95 @@ def path(x, y):
             for rect in row:
                 pygame.draw.rect(screen, (0, 0, 0), rect, 1)
 
+        # pathfinding algorithm
+        if state == 3:
+            # cycle through every currently possible path
+            number_of_paths = len(possible_paths)
+            while number_of_paths > 0:
+                # get the end of the current path
+                current_path = possible_paths[0]
+                end_of_path = current_path[-1]
+                end_x = end_of_path[0]
+                end_y = end_of_path[1]
+
+                # see to where the path can continue
+                continuation = []
+                # left
+                if end_x - 1 >= 0 and (end_x-1, end_y) not in obstacles and [end_x-1, end_y] not in current_path:
+                    continuation.append([end_x-1, end_y])
+                    # check if you have found the shortest path
+                    if [end_x-1, end_y] == end:
+                        possible_paths.append(current_path.copy() + [[end_x-1, end_y]])
+                        state = 4
+                        found = True
+                        break
+                # right
+                if end_x + 1 < x and (end_x+1, end_y) not in obstacles and [end_x+1, end_y] not in current_path:
+                    continuation.append([end_x+1, end_y])
+                    # check if you have found the shortest path
+                    if [end_x + 1, end_y] == end:
+                        possible_paths.append(current_path.copy() + [[end_x+1, end_y]])
+                        state = 4
+                        found = True
+                        break
+                # up
+                if end_y - 1 >= 0 and (end_x, end_y-1) not in obstacles and [end_x, end_y-1] not in current_path:
+                    continuation.append([end_x, end_y-1])
+                    # check if you have found the shortest path
+                    if [end_x, end_y-1] == end:
+                        possible_paths.append(current_path.copy() + [[end_x, end_y-1]])
+                        state = 4
+                        found = True
+                        break
+                # down
+                if end_y + 1 < y and (end_x, end_y+1) not in obstacles and [end_x, end_y+1] not in current_path:
+                    continuation.append([end_x, end_y+1])
+                    # check if you have found the shortest path
+                    if [end_x, end_y+1] == end:
+                        possible_paths.append(current_path.copy() + [[end_x, end_y+1]])
+                        state = 4
+                        found = True
+                        break
+
+                # continue to the next step of the path
+                for c in continuation:
+                    possible_paths.append(current_path.copy() + [[c[0], c[1]]])
+
+                # go to the next path and remove the current one as it has already been expanded
+                number_of_paths -= 1
+                del possible_paths[0]
+
+            # check if there are no more paths remaining (then it's impossible to find the correct one)
+            if len(possible_paths) == 0:
+                state = 4
+
+        # display the paths that have been tried
+        if state >= 3:
+            for possibility in possible_paths:
+                for block in possibility:
+                    pygame.draw.rect(screen, (0, 255, 255), grid[block[0]][block[1]])
+            # delay the app to help the user see the visualization better
+            sleep(0.5)
+
+        # if the path has been found display it
+        if state == 4:
+            if found:
+                # the right path is always the last one as we break the while after it
+                right_path = possible_paths[-1]
+                for block_x, block_y in right_path[1:-1]:
+                    pygame.draw.rect(screen, (128, 128, 128), grid[block_x][block_y])
+            else:
+                # display a message that there is no right path
+                no_right_path = font.render("Path not possible!", True, (0, 0, 0))
+                screen.blit(no_right_path, (620, 500))
+
         # display starting, end points and obstacles if any
         if state >= 1:
             pygame.draw.rect(screen, (0, 255, 0), grid[beginning[0]][beginning[1]])
         if state >= 2:
             pygame.draw.rect(screen, (255, 0, 0), grid[end[0]][end[1]])
             for obstacle in obstacles:
+                obstacle = list(obstacle)
                 pygame.draw.rect(screen, (0, 0, 255), grid[obstacle[0]][obstacle[1]])
 
         # display help message
