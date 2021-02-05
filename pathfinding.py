@@ -168,8 +168,9 @@ def path(x, y):
     start_button_a_rect = pygame.Rect((615, 300), (170, 50))
     start_button_a_text = font.render("Start with A*", True, (255, 255, 255))
 
-    # variable to check if the path has been found
-    found = False
+    # start over button
+    start_over_rect = pygame.Rect((615, 400), (170, 50))
+    start_over_text = font.render("Find another path", True, (255, 255, 255))
 
     # update
     while True:
@@ -209,6 +210,10 @@ def path(x, y):
                 if start_button_a_rect.collidepoint(event.pos) and state == 2:
                     state = 3
                     method = 1
+
+                # start over event
+                if start_over_rect.collidepoint(event.pos):
+                    home_screen()
         
         # white screen
         screen.fill((255, 255, 255))
@@ -245,6 +250,10 @@ def path(x, y):
             screen.blit(start_button_brute_text, (700 - list(font.size("Start with bruteforce"))[0]/2, 225 - list(font.size("Start with bruteforce"))[1]/2))
             pygame.draw.rect(screen, (0, 0, 0), start_button_a_rect)
             screen.blit(start_button_a_text, (700 - list(font.size("Start with A*"))[0] / 2, 325 - list(font.size("Start with A*"))[1] / 2))
+
+        # display play again button
+        pygame.draw.rect(screen, (0, 0, 0), start_over_rect)
+        screen.blit(start_over_text, (700 - list(font.size("Find another path"))[0] / 2, 425 - list(font.size("Find another path"))[1] / 2))
 
         # update frame
         pygame.display.flip()

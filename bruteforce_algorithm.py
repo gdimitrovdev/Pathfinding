@@ -6,6 +6,9 @@ import pygame
 
 
 def bruteforce(screen, font, grid, state, obstacles, end, possible_paths, x, y):
+    # variable to check if a path has been found
+    found = False
+
     # cycle through every currently possible path
     number_of_paths = len(possible_paths)
     while number_of_paths > 0:
