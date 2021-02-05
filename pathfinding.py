@@ -146,13 +146,25 @@ def path(x, y):
     help_message = "Select a starting point."
     help_text = font.render(help_message, True, (0, 0, 0))
 
+    # warning message displayed on screen
+    warning_text_1 = font.render("Don't use bruteforce on", True, (0, 0, 0))
+    warning_text_2 = font.render("grids larger than 8x8!", True, (0, 0, 0))
+
     # state ( 0 -> selecting starting point, 1 -> selecting end point,
     #         2 -> drawing obstacles, 3 -> simulating, 4 -> finished )
     state = 0
 
+    # method ( 0 -> bruteforce, 1 -> A* )
+    method = ""
+
     # start button after selecting end point
-    start_button_rect = pygame.Rect((625, 200), (150, 50))
-    start_button_text = font.render("Start simulation", True, (255, 255, 255))
+    # bruteforce
+    start_button_brute_rect = pygame.Rect((615, 200), (170, 50))
+    start_button_brute_text = font.render("Start with bruteforce", True, (255, 255, 255))
+
+    # a* algorithm
+    start_button_a_rect = pygame.Rect((615, 300), (170, 50))
+    start_button_a_text = font.render("Start with A*", True, (255, 255, 255))
 
     # variable to check if the path has been found
     found = False
@@ -186,18 +198,15 @@ def path(x, y):
                     elif state == 2:
                         obstacles[(x1, y1)] = True
 
-                # start simulation event
-                if start_button_rect.collidepoint(event.pos) and state == 2:
+                # start simulation events
+                if start_button_brute_rect.collidepoint(event.pos) and state == 2:
                     state = 3
+                    method = 0
                     # start looking for all possible paths
                     possible_paths = [[beginning]]
-
-            # use enter instead of the start button
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN and state == 2:
+                if start_button_a_rect.collidepoint(event.pos) and state == 2:
                     state = 3
-                    # start looking for all possible paths
-                    possible_paths = [[beginning]]
+                    method = 1
         
         # white screen
         screen.fill((255, 255, 255))
@@ -207,87 +216,88 @@ def path(x, y):
             for rect in row:
                 pygame.draw.rect(screen, (0, 0, 0), rect, 1)
 
-        # pathfinding algorithm
-        if state == 3:
-            # cycle through every currently possible path
-            number_of_paths = len(possible_paths)
-            while number_of_paths > 0:
-                # get the end of the current path
-                current_path = possible_paths[0]
-                end_of_path = current_path[-1]
-                end_x = end_of_path[0]
-                end_y = end_of_path[1]
+        # bruteforce algorithm
+        if method == 0:
+            if state == 3:
+                # cycle through every currently possible path
+                number_of_paths = len(possible_paths)
+                while number_of_paths > 0:
+                    # get the end of the current path
+                    current_path = possible_paths[0]
+                    end_of_path = current_path[-1]
+                    end_x = end_of_path[0]
+                    end_y = end_of_path[1]
 
-                # see to where the path can continue
-                continuation = []
-                # left
-                if end_x - 1 >= 0 and (end_x-1, end_y) not in obstacles and [end_x-1, end_y] not in current_path:
-                    continuation.append([end_x-1, end_y])
-                    # check if you have found the shortest path
-                    if [end_x-1, end_y] == end:
-                        possible_paths.append(current_path.copy() + [[end_x-1, end_y]])
-                        state = 4
-                        found = True
-                        break
-                # right
-                if end_x + 1 < x and (end_x+1, end_y) not in obstacles and [end_x+1, end_y] not in current_path:
-                    continuation.append([end_x+1, end_y])
-                    # check if you have found the shortest path
-                    if [end_x + 1, end_y] == end:
-                        possible_paths.append(current_path.copy() + [[end_x+1, end_y]])
-                        state = 4
-                        found = True
-                        break
-                # up
-                if end_y - 1 >= 0 and (end_x, end_y-1) not in obstacles and [end_x, end_y-1] not in current_path:
-                    continuation.append([end_x, end_y-1])
-                    # check if you have found the shortest path
-                    if [end_x, end_y-1] == end:
-                        possible_paths.append(current_path.copy() + [[end_x, end_y-1]])
-                        state = 4
-                        found = True
-                        break
-                # down
-                if end_y + 1 < y and (end_x, end_y+1) not in obstacles and [end_x, end_y+1] not in current_path:
-                    continuation.append([end_x, end_y+1])
-                    # check if you have found the shortest path
-                    if [end_x, end_y+1] == end:
-                        possible_paths.append(current_path.copy() + [[end_x, end_y+1]])
-                        state = 4
-                        found = True
-                        break
+                    # see to where the path can continue
+                    continuation = []
+                    # left
+                    if end_x - 1 >= 0 and (end_x-1, end_y) not in obstacles and [end_x-1, end_y] not in current_path:
+                        continuation.append([end_x-1, end_y])
+                        # check if you have found the shortest path
+                        if [end_x-1, end_y] == end:
+                            possible_paths.append(current_path.copy() + [[end_x-1, end_y]])
+                            state = 4
+                            found = True
+                            break
+                    # right
+                    if end_x + 1 < x and (end_x+1, end_y) not in obstacles and [end_x+1, end_y] not in current_path:
+                        continuation.append([end_x+1, end_y])
+                        # check if you have found the shortest path
+                        if [end_x + 1, end_y] == end:
+                            possible_paths.append(current_path.copy() + [[end_x+1, end_y]])
+                            state = 4
+                            found = True
+                            break
+                    # up
+                    if end_y - 1 >= 0 and (end_x, end_y-1) not in obstacles and [end_x, end_y-1] not in current_path:
+                        continuation.append([end_x, end_y-1])
+                        # check if you have found the shortest path
+                        if [end_x, end_y-1] == end:
+                            possible_paths.append(current_path.copy() + [[end_x, end_y-1]])
+                            state = 4
+                            found = True
+                            break
+                    # down
+                    if end_y + 1 < y and (end_x, end_y+1) not in obstacles and [end_x, end_y+1] not in current_path:
+                        continuation.append([end_x, end_y+1])
+                        # check if you have found the shortest path
+                        if [end_x, end_y+1] == end:
+                            possible_paths.append(current_path.copy() + [[end_x, end_y+1]])
+                            state = 4
+                            found = True
+                            break
 
-                # continue to the next step of the path
-                for c in continuation:
-                    possible_paths.append(current_path.copy() + [[c[0], c[1]]])
+                    # continue to the next step of the path
+                    for c in continuation:
+                        possible_paths.append(current_path.copy() + [[c[0], c[1]]])
 
-                # go to the next path and remove the current one as it has already been expanded
-                number_of_paths -= 1
-                del possible_paths[0]
+                    # go to the next path and remove the current one as it has already been expanded
+                    number_of_paths -= 1
+                    del possible_paths[0]
 
-            # check if there are no more paths remaining (then it's impossible to find the correct one)
-            if len(possible_paths) == 0:
-                state = 4
+                # check if there are no more paths remaining (then it's impossible to find the correct one)
+                if len(possible_paths) == 0:
+                    state = 4
 
-        # display the paths that have been tried
-        if state >= 3:
-            for possibility in possible_paths:
-                for block in possibility:
-                    pygame.draw.rect(screen, (0, 255, 255), grid[block[0]][block[1]])
-            # delay the app to help the user see the visualization better
-            sleep(0.5)
+            # display the paths that have been tried
+            if state >= 3:
+                for possibility in possible_paths:
+                    for block in possibility:
+                        pygame.draw.rect(screen, (0, 255, 255), grid[block[0]][block[1]])
+                # delay the app to help the user see the visualization better
+                sleep(0.5)
 
-        # if the path has been found display it
-        if state == 4:
-            if found:
-                # the right path is always the last one as we break the while after it
-                right_path = possible_paths[-1]
-                for block_x, block_y in right_path[1:-1]:
-                    pygame.draw.rect(screen, (128, 128, 128), grid[block_x][block_y])
-            else:
-                # display a message that there is no right path
-                no_right_path = font.render("Path not possible!", True, (0, 0, 0))
-                screen.blit(no_right_path, (620, 500))
+            # if the path has been found display it
+            if state == 4:
+                if found:
+                    # the right path is always the last one as we break the while after it
+                    right_path = possible_paths[-1]
+                    for block_x, block_y in right_path[1:-1]:
+                        pygame.draw.rect(screen, (128, 128, 128), grid[block_x][block_y])
+                else:
+                    # display a message that there is no right path
+                    no_right_path = font.render("Path not possible!", True, (0, 0, 0))
+                    screen.blit(no_right_path, (610, 500))
 
         # display starting, end points and obstacles if any
         if state >= 1:
@@ -299,12 +309,18 @@ def path(x, y):
                 pygame.draw.rect(screen, (0, 0, 255), grid[obstacle[0]][obstacle[1]])
 
         # display help message
-        screen.blit(help_text, (620, 20))
+        screen.blit(help_text, (610, 20))
+
+        # display warning message
+        screen.blit(warning_text_1, (610, 100))
+        screen.blit(warning_text_2, (610, 120))
 
         # display start button
         if state >= 2:
-            pygame.draw.rect(screen, (0, 0, 0), start_button_rect)
-            screen.blit(start_button_text, (700 - list(font.size("Start simulation."))[0]/2, 225 - list(font.size("Start simulation."))[1]/2))
+            pygame.draw.rect(screen, (0, 0, 0), start_button_brute_rect)
+            screen.blit(start_button_brute_text, (700 - list(font.size("Start with bruteforce"))[0]/2, 225 - list(font.size("Start with bruteforce"))[1]/2))
+            pygame.draw.rect(screen, (0, 0, 0), start_button_a_rect)
+            screen.blit(start_button_a_text, (700 - list(font.size("Start with A*"))[0] / 2, 325 - list(font.size("Start with A*"))[1] / 2))
 
         # update frame
         pygame.display.flip()
