@@ -5,6 +5,20 @@ from time import sleep
 import pygame
 
 
+# algorithm explanation
+'''
+this algorithm expands every possible path with 1 block in every possible 
+direction on every cycle of the "while True:" in pathfinding.py
+
+then on the next cycle of "while True:" we expand our new paths and so on until we either get to the end
+point (1) or we are out of possible expansions for the path (2)
+
+(1) if we get to the end point we know we have found the "best" path and we can stop the simulation 
+(that's because every path gains 1 block of length on every cycle so the paths grow equally fast)
+
+(2) if we can't expand any of the paths anymore and the state is still 3 (simulating) this means we haven't reacted
+the final point and we are closed out by obstacles so we tell the user that a path can't be found
+'''
 def bruteforce(screen, font, grid, state, obstacles, end, possible_paths, x, y):
     # variable to check if a path has been found
     found = False

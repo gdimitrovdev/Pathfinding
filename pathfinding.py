@@ -6,6 +6,7 @@ import pygame
 
 # imports from my files
 from bruteforce_algorithm import bruteforce
+from a_star_algorithm import a_star
 
 # initializing pygame
 pygame.init()
@@ -210,6 +211,12 @@ def path(x, y):
                 if start_button_a_rect.collidepoint(event.pos) and state == 2:
                     state = 3
                     method = 1
+                    # get all selected and not selected blocks you have access to
+                    # assign a value to them showing how many turns it takes to get to them from the beginning
+                    selected = {}
+                    available = {
+                        tuple(beginning): 0
+                    }
 
                 # start over event
                 if start_over_rect.collidepoint(event.pos):
@@ -227,6 +234,11 @@ def path(x, y):
         if method == 0:
             if state == 3:
                 bruteforce(screen, font, grid, state, obstacles, end, possible_paths, x, y)
+
+        # A* algorithm
+        if method == 1:
+            if state == 3:
+                a_star(screen, font, grid, state, obstacles, end, selected, available, x, y)
 
         # display starting, end points and obstacles if any
         if state >= 1:
@@ -254,6 +266,9 @@ def path(x, y):
         # display play again button
         pygame.draw.rect(screen, (0, 0, 0), start_over_rect)
         screen.blit(start_over_text, (700 - list(font.size("Find another path"))[0] / 2, 425 - list(font.size("Find another path"))[1] / 2))
+
+        # display menu line
+        pygame.draw.line(screen, (0, 0, 0), (605, 0), (605, 600))
 
         # update frame
         pygame.display.flip()
