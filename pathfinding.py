@@ -193,13 +193,13 @@ def path(x, y):
                         help_message = "Select an ending point."
                         help_text = font.render(help_message, True, (0, 0, 0))
                     # setting ending point
-                    elif state == 1:
+                    elif state == 1 and (x1 != beginning[0] or y1 != beginning[1]):
                         end = [x1, y1]
                         state = 2
                         help_message = "Select obstacles."
                         help_text = font.render(help_message, True, (0, 0, 0))
                     # setting obstacles
-                    elif state == 2:
+                    elif state == 2 and (x1 != beginning[0] or y1 != beginning[1]) and (x1 != end[0] or y1 != end[1]):
                         obstacles[(x1, y1)] = True
 
                 # start simulation events
@@ -214,8 +214,10 @@ def path(x, y):
                     # get all selected and not selected blocks you have access to
                     # assign a value to them showing how many turns it takes to get to them from the beginning
                     selected = {}
+                    # for every point we remember coordinates, G and H values (look at algorithm file) and point it came
+                    # from, and for the starting point we ignore where it came from (and the value becomes 9)
                     available = {
-                        tuple(beginning): 0
+                        tuple(beginning): [0, abs(end[0]-beginning[0]) + abs(end[1]-beginning[1]), 0]
                     }
 
                 # start over event
@@ -238,7 +240,7 @@ def path(x, y):
         # A* algorithm
         if method == 1:
             if state == 3:
-                a_star(screen, font, grid, state, obstacles, end, selected, available, x, y)
+                a_star(screen, font, grid, state, obstacles, beginning, end, selected, available, x, y)
 
         # display starting, end points and obstacles if any
         if state >= 1:
