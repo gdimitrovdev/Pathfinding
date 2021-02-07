@@ -5,6 +5,7 @@ import sys
 import pygame
 
 # imports from my files
+import config
 from bruteforce_algorithm import bruteforce
 from a_star_algorithm import a_star
 
@@ -153,10 +154,6 @@ def path(x, y):
     warning_text_1 = font.render("Don't use bruteforce on", True, (0, 0, 0))
     warning_text_2 = font.render("grids larger than 8x8!", True, (0, 0, 0))
 
-    # state ( 0 -> selecting starting point, 1 -> selecting end point,
-    #         2 -> drawing obstacles, 3 -> simulating, 4 -> finished )
-    state = 0
-
     # method ( 0 -> bruteforce, 1 -> A* )
     method = ""
 
@@ -187,29 +184,29 @@ def path(x, y):
                 x1, y1 = x1 // 20, y1 // 20
                 if x1 < x and y1 < y:
                     # setting beginning point
-                    if state == 0:
+                    if config.state == 0:
                         beginning = [x1, y1]
-                        state = 1
+                        config.state = 1
                         help_message = "Select an ending point."
                         help_text = font.render(help_message, True, (0, 0, 0))
                     # setting ending point
-                    elif state == 1 and (x1 != beginning[0] or y1 != beginning[1]):
+                    elif config.state == 1 and (x1 != beginning[0] or y1 != beginning[1]):
                         end = [x1, y1]
-                        state = 2
+                        config.state = 2
                         help_message = "Select obstacles."
                         help_text = font.render(help_message, True, (0, 0, 0))
                     # setting obstacles
-                    elif state == 2 and (x1 != beginning[0] or y1 != beginning[1]) and (x1 != end[0] or y1 != end[1]):
+                    elif config.state == 2 and (x1 != beginning[0] or y1 != beginning[1]) and (x1 != end[0] or y1 != end[1]):
                         obstacles[(x1, y1)] = True
 
                 # start simulation events
-                if start_button_brute_rect.collidepoint(event.pos) and state == 2:
-                    state = 3
+                if start_button_brute_rect.collidepoint(event.pos) and config.state == 2:
+                    config.state = 3
                     method = 0
                     # start looking for all possible paths
                     possible_paths = [[beginning]]
-                if start_button_a_rect.collidepoint(event.pos) and state == 2:
-                    state = 3
+                if start_button_a_rect.collidepoint(event.pos) and config.state == 2:
+                    config.state = 3
                     method = 1
                     # get all selected and not selected blocks you have access to
                     # assign a value to them showing how many turns it takes to get to them from the beginning
@@ -234,18 +231,41 @@ def path(x, y):
 
         # bruteforce algorithm
         if method == 0:
-            if state == 3:
-                bruteforce(screen, font, grid, state, obstacles, end, possible_paths, x, y)
+            if config.state == 3:
+                bruteforce(screen, font, grid, obstacles, end, possible_paths, x, y)
 
         # A* algorithm
         if method == 1:
-            if state == 3:
-                a_star(screen, font, grid, state, obstacles, beginning, end, selected, available, x, y)
+            if config.state == 3:
+                a_star(screen, font, grid, obstacles, beginning, end, selected, available, x, y)
+
+        # display the path if it has been found
+        if config.state == 4:
+            if method == 0:
+                if config.found:
+                    # the right path is always the last one as we break the while after it
+                    for block_x, block_y in config.final_path[1:-1]:
+                        pygame.draw.rect(screen, (128, 128, 128), grid[block_x][block_y])
+                else:
+                    # display a message that there is no right path
+                    no_right_path = font.render("Path not possible!", True, (0, 0, 0))
+                    screen.blit(no_right_path, (610, 500))
+            if method == 1:
+                if config.found:
+                    for block, rest in config.final_path[1:-1]:
+                        block = list(block)
+                        block_x = block[0]
+                        block_y = block[1]
+                        pygame.draw.rect(screen, (128, 128, 128), grid[block_x][block_y])
+                else:
+                    # display a message that there is no right path
+                    no_right_path = font.render("Path not possible!", True, (0, 0, 0))
+                    screen.blit(no_right_path, (610, 500))
 
         # display starting, end points and obstacles if any
-        if state >= 1:
+        if config.state >= 1:
             pygame.draw.rect(screen, (0, 255, 0), grid[beginning[0]][beginning[1]])
-        if state >= 2:
+        if config.state >= 2:
             pygame.draw.rect(screen, (255, 0, 0), grid[end[0]][end[1]])
             for obstacle in obstacles:
                 obstacle = list(obstacle)
@@ -259,7 +279,7 @@ def path(x, y):
         screen.blit(warning_text_2, (610, 120))
 
         # display start button
-        if state >= 2:
+        if config.state >= 2:
             pygame.draw.rect(screen, (0, 0, 0), start_button_brute_rect)
             screen.blit(start_button_brute_text, (700 - list(font.size("Start with bruteforce"))[0]/2, 225 - list(font.size("Start with bruteforce"))[1]/2))
             pygame.draw.rect(screen, (0, 0, 0), start_button_a_rect)
