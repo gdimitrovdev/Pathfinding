@@ -219,6 +219,9 @@ def path(x, y):
 
                 # start over event
                 if start_over_rect.collidepoint(event.pos):
+                    config.state = 0
+                    config.found = False
+                    config.final_path = ""
                     home_screen()
         
         # white screen
@@ -248,7 +251,7 @@ def path(x, y):
                         pygame.draw.rect(screen, (128, 128, 128), grid[block_x][block_y])
                 else:
                     # display a message that there is no right path
-                    no_right_path = font.render("Path not possible!", True, (0, 0, 0))
+                    no_right_path = font.render("Path not possible!", True, (255, 0, 0))
                     screen.blit(no_right_path, (610, 500))
             if method == 1:
                 if config.found:
@@ -259,7 +262,7 @@ def path(x, y):
                         pygame.draw.rect(screen, (128, 128, 128), grid[block_x][block_y])
                 else:
                     # display a message that there is no right path
-                    no_right_path = font.render("Path not possible!", True, (0, 0, 0))
+                    no_right_path = font.render("Path not possible!", True, (255, 0, 0))
                     screen.blit(no_right_path, (610, 500))
 
         # display starting, end points and obstacles if any
